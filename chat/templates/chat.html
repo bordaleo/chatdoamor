@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nosso Cantinho 💞</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Cores dinâmicas baseadas no usuário */
+        body.user-gabi {
+            background: linear-gradient(135deg, #ffb6c1, #ff69b4, #ff1493);
+        }
+
+        body.user-leo {
+            background: linear-gradient(135deg, #4a90e2, #357abd, #2e5c8a);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-size: 300% 300%;
+            animation: gradientMove 12s ease infinite;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sidebar {
+            width: 300px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--glass-border);
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .sidebar-header h3 {
+            color: #ffebef;
+            font-size: 22px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        body.user-leo .sidebar-header h3 {
+            color: #e3f2fd;
+        }
+
+        .users {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .users::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .users::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .users::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        .user-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(5px);
+        }
+
+        .user-item.active {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        body.user-gabi .user-item.active {
+            background: linear-gradient(135deg, #ff80ab, #ff4081);
+        }
+
+        body.user-leo .user-item.active {
+            background: linear-gradient(135deg, #5ba3f5, #357abd);
+        }
+
+        .online-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 10px #4ade80;
+            animation: pulse 2s infinite;
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        .online-indicator.online {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .logout {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .logout-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            color: #ffd1dc;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        body.user-leo .logout-btn {
+            color: #bbdefb;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.02);
+        }
+
+        .chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .chat-header {
+            padding: 20px;
+            text-align: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffe4f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        body.user-leo .chat-header {
+            color: #e3f2fd;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+
+        .msg {
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 70%;
+            line-height: 1.5;
+            font-size: 15px;
+            position: relative;
+            animation: fadeInUp 0.3s ease;
+            word-wrap: break-word;
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(10px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        .msg.sent {
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        body.user-gabi .msg.sent {
+            background: linear-gradient(135deg, #ff80ab, #ff4081);
+        }
+
+        body.user-leo .msg.sent {
+            background: linear-gradient(135deg, #5ba3f5, #357abd);
+        }
+
+        .msg.received {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
+            border-bottom-left-radius: 4px;
+        }
+
+        .msg-image {
+            max-width: 100%;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .msg-image:hover {
+            transform: scale(1.05);
+        }
+
+        .msg-time {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+            font-weight: 300;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .msg-status {
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .msg-status.single-check {
+            color: #9ca3af;
+        }
+
+        .msg-status.double-check {
+            color: #60a5fa;
+        }
+
+        .msg-read-at {
+            font-size: 11px;
+            margin-left: 6px;
+            opacity: 0.75;
+        }
+
+        .presence-text {
+            font-size: 12px;
+            opacity: 0.85;
+            margin-left: 10px;
+        }
+
+        .typing-indicator {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #ffd1dc;
+            align-self: flex-start;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        body.user-leo .typing-indicator {
+            color: #bbdefb;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots span {
+            animation: typing 1.4s infinite;
+            opacity: 0.4;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 0.4; }
+            30% { opacity: 1; }
+        }
+
+        .input-container {
+            display: flex;
+            padding: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid var(--glass-border);
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .file-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+
+        .input-container input[type="text"] {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: none;
+            outline: none;
+            background: rgba(255,255,255,0.25);
+            color: white;
+            font-size: 15px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .input-container input[type="text"]::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .input-container input[type="text"]:focus {
+            background: rgba(255,255,255,0.35);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+        }
+
+        .send-btn {
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        body.user-gabi .send-btn {
+            background: linear-gradient(135deg, #ff80ab, #ff4081);
+        }
+
+        body.user-leo .send-btn {
+            background: linear-gradient(135deg, #5ba3f5, #357abd);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .send-btn:active {
+            transform: scale(0.98);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            text-align: center;
+            margin: auto;
+            color: #ffe4f0;
+        }
+
+        body.user-leo .empty-state {
+            color: #e3f2fd;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            background: rgba(74, 222, 128, 0.9);
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+
+        .connection-status.offline {
+            background: rgba(156, 163, 175, 0.9);
+            color: white;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            object-fit: cover;
+        }
+
+        .preview-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .remove-preview {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                left: -100%;
+                transition: left 0.3s ease;
+                z-index: 100;
+                height: 100%;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .chat {
+                width: 100%;
+            }
+
+            .msg {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body class="user-{{ request.user.username }}">
+    <div class="connection-status" id="connectionStatus">Conectando...</div>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>💞 Nosso Cantinho</h3>
+        </div>
+        <div class="users" id="usersList">
+            {% for u in users %}
+                <a href="?user={{ u.id }}" class="user-item {% if selected_user and selected_user.id == u.id %}active{% endif %}" data-user-id="{{ u.id }}">
+                    <span>{{ u.username }}</span>
+                    <span
+                        class="online-indicator {% if u.is_online %}online{% endif %}"
+                        title="{% if u.is_online %}Online{% elif u.last_seen %}Visto por último: {{ u.last_seen|date:'d/m H:i' }}{% else %}Offline{% endif %}"
+                    ></span>
+                </a>
+            {% endfor %}
+        </div>
+        <div class="logout">
+            <a href="{% url 'logout' %}" class="logout-btn">Sair 💔</a>
+        </div>
+    </div>
+
+    <div class="chat">
+        {% if selected_user %}
+            <div class="chat-header">
+                Conversando com 💖 {{ selected_user.username }}
+                <span class="presence-text" id="presenceText">
+                    {% if selected_presence and selected_presence.is_online %}
+                        ● online
+                    {% elif selected_presence and selected_presence.last_seen %}
+                        visto por último {{ selected_presence.last_seen|date:"d/m H:i" }}
+                    {% else %}
+                        offline
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="messages" id="messageContainer">
+                {% for msg in messages %}
+                    <div class="msg {% if msg.sender == request.user %}sent{% else %}received{% endif %}" data-message-id="{{ msg.id }}">
+                        {% if msg.image %}
+                            <img src="{{ msg.image.url }}" alt="Imagem" class="msg-image" onclick="openImageModal('{{ msg.image.url }}')">
+                        {% endif %}
+                        {% if msg.content %}
+                            <div>{{ msg.content }}</div>
+                        {% endif %}
+                        <div class="msg-time">
+                            {{ msg.timestamp|date:"H:i" }}
+                            {% if msg.sender == request.user %}
+                                <span class="msg-status {% if msg.is_read %}double-check{% else %}single-check{% endif %}" {% if msg.is_read and msg.read_at %}title="Visualizado às {{ msg.read_at|date:'H:i' }}"{% endif %}>
+                                    {% if msg.is_read %}✓✓{% else %}✓{% endif %}
+                                </span>
+                                <span class="msg-read-at">{% if msg.is_read and msg.read_at %}{{ msg.read_at|date:"H:i" }}{% endif %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <h2>Comece com um "Oi 💌"...</h2>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <span>{{ selected_user.username }} está digitando</span>
+                <span class="typing-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+            </div>
+
+            <form id="chatForm" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="receiver" value="{{ selected_user.id }}">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <div class="file-input-wrapper">
+                            <input type="file" id="imageInput" name="image" accept="image/*" capture="environment">
+                            <button type="button" class="file-btn" onclick="document.getElementById('imageInput').click()">📷</button>
+                        </div>
+                        <div id="imagePreview"></div>
+                        <input type="text" id="msgInput" name="message" placeholder="Escreva com amor..." autocomplete="off" autofocus>
+                    </div>
+                    <button class="send-btn" id="sendBtn" type="submit">💬</button>
+                </div>
+            </form>
+        {% else %}
+            <div class="empty-state">
+                <h2>Selecione o amor da sua vida 💕</h2>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal para visualizar imagem -->
+    <div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; cursor: pointer;" onclick="closeImageModal()">
+        <img id="modalImage" style="max-width: 90%; max-height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 12px;">
+    </div>
+
+    <script>
+        const currentUserId = {{ request.user.id }};
+        const currentUsername = '{{ request.user.username }}';
+        const selectedUserId = {{ selected_user.id|default:"null" }};
+        const roomName = selectedUserId ? `room_${Math.min(currentUserId, selectedUserId)}_${Math.max(currentUserId, selectedUserId)}` : null;
+        
+        let chatSocket = null;
+        let presenceSocket = null;
+        let typingTimeout = null;
+        let isTyping = false;
+        let isOnline = navigator.onLine;
+        let isSending = false;
+
+        // Detectar status de conexão
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateConnectionStatus('connected');
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateConnectionStatus('offline');
+        });
+
+        // WebSocket connection
+        if (roomName) {
+            connectWebSocket();
+        }
+        connectPresenceWebSocket();
+
+        function connectPresenceWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/presence/`;
+
+            presenceSocket = new WebSocket(wsUrl);
+
+            presenceSocket.onopen = function() {
+                // conectado
+            };
+
+            presenceSocket.onclose = function() {
+                // tentar reconectar
+                setTimeout(() => {
+                    if (navigator.onLine) connectPresenceWebSocket();
+                }, 3000);
+            };
+
+            presenceSocket.onerror = function() {
+                // ignore
+            };
+
+            presenceSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                if (data.type === 'presence_snapshot') {
+                    (data.users || []).forEach(u => {
+                        updateUserPresenceUI(u.user_id, u.is_online, u.last_seen);
+                    });
+                } else if (data.type === 'presence_update') {
+                    updateUserPresenceUI(data.user_id, data.is_online, data.last_seen);
+                }
+            };
+        }
+
+        function formatLastSeen(iso) {
+            if (!iso) return null;
+            const d = new Date(iso);
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function updateUserPresenceUI(userId, isOnlineNow, lastSeenIso) {
+            // sidebar dot
+            const userItem = document.querySelector(`.user-item[data-user-id="${userId}"]`);
+            if (userItem) {
+                const dot = userItem.querySelector('.online-indicator');
+                if (dot) {
+                    dot.classList.toggle('online', !!isOnlineNow);
+                    const lastSeenTxt = formatLastSeen(lastSeenIso);
+                    dot.title = isOnlineNow ? 'Online' : (lastSeenTxt ? `Visto por último: ${lastSeenTxt}` : 'Offline');
+                }
+            }
+
+            // header
+            if (selectedUserId && Number(selectedUserId) === Number(userId)) {
+                const presenceText = document.getElementById('presenceText');
+                if (presenceText) {
+                    const lastSeenTxt = formatLastSeen(lastSeenIso);
+                    presenceText.textContent = isOnlineNow ? '● online' : (lastSeenTxt ? `visto por último ${lastSeenTxt}` : 'offline');
+                }
+            }
+        }
+
+        function connectWebSocket() {
+            if (!roomName) return;
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat/${roomName}/`;
+            
+            chatSocket = new WebSocket(wsUrl);
+
+            chatSocket.onopen = function(e) {
+                console.log('WebSocket conectado');
+                isOnline = true;
+                updateConnectionStatus('connected');
+            };
+
+            chatSocket.onclose = function(e) {
+                console.log('WebSocket desconectado');
+                updateConnectionStatus('disconnected');
+                // Tentar reconectar após 3 segundos
+                setTimeout(() => {
+                    if (roomName && isOnline) {
+                        connectWebSocket();
+                    }
+                }, 3000);
+            };
+
+            chatSocket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus('disconnected');
+            };
+
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                
+                if (data.type === 'message') {
+                    const isSent = data.sender_id === currentUserId;
+                    
+                    // Se for mensagem enviada pelo usuário, verificar se há temporária para substituir
+                    if (isSent) {
+                        const container = document.getElementById('messageContainer');
+                        const tempMsgs = container.querySelectorAll('[data-message-id^="temp_"]');
+                        tempMsgs.forEach(tempMsg => {
+                            const tempContent = tempMsg.querySelector('div')?.textContent?.trim();
+                            if (tempContent === (data.message || '').trim()) {
+                                tempMsg.remove();
+                            }
+                        });
+                    }
+                    
+                    addMessageToChat(data, isSent);
+                    // Marcar como lida se for mensagem recebida
+                    if (!isSent) {
+                        markMessageAsRead(data.message_id);
+                    }
+                } else if (data.type === 'typing') {
+                    if (data.user_id !== currentUserId) {
+                        showTypingIndicator(data.is_typing);
+                    }
+                } else if (data.type === 'read_receipt') {
+                    updateMessageStatus(data.message_id, data.read_at);
+                }
+            };
+        }
+
+        function updateConnectionStatus(status) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (status === 'connected') {
+                statusEl.textContent = '● Conectado';
+                statusEl.className = 'connection-status connected';
+            } else if (status === 'offline') {
+                statusEl.textContent = '● Offline';
+                statusEl.className = 'connection-status offline';
+            } else {
+                statusEl.textContent = '● Desconectado';
+                statusEl.className = 'connection-status disconnected';
+            }
+        }
+
+        function addMessageToChat(data, isSent) {
+            const container = document.getElementById('messageContainer');
+            
+            // Verificar se mensagem já existe (evitar duplicatas)
+            const existingMsg = container.querySelector(`[data-message-id="${data.message_id}"]`);
+            if (existingMsg) {
+                return; // Mensagem já existe
+            }
+            
+            // Se for mensagem temporária e já existe outra temporária com mesmo conteúdo, não adicionar
+            if (data.message_id.toString().startsWith('temp_')) {
+                const tempMsgs = container.querySelectorAll('[data-message-id^="temp_"]');
+                for (let tempMsg of tempMsgs) {
+                    const tempContent = tempMsg.querySelector('div')?.textContent?.trim();
+                    if (tempContent === (data.message || '').trim()) {
+                        return; // Já existe temporária com mesmo conteúdo
+                    }
+                }
+            }
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${isSent ? 'sent' : 'received'}`;
+            msgDiv.setAttribute('data-message-id', data.message_id);
+            
+            const time = new Date(data.timestamp).toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'America/Sao_Paulo'
+            });
+            
+            let content = '';
+            if (data.image_url) {
+                content += `<img src="${data.image_url}" alt="Imagem" class="msg-image" onclick="openImageModal('${data.image_url}')">`;
+            }
+            if (data.message) {
+                content += `<div>${escapeHtml(data.message)}</div>`;
+            }
+            
+            const statusIcon = isSent
+                ? `<span class="msg-status ${data.is_read ? 'double-check' : 'single-check'}" ${data.read_at ? `title="Visualizado às ${new Date(data.read_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}"` : ''}>${data.is_read ? '✓✓' : '✓'}</span><span class="msg-read-at">${data.read_at ? new Date(data.read_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : ''}</span>`
+                : '';
+            
+            msgDiv.innerHTML = `
+                ${content}
+                <div class="msg-time">
+                    ${time}
+                    ${statusIcon}
+                </div>
+            `;
+            
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            // Remover empty state se existir
+            const emptyState = container.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showTypingIndicator(show) {
+            const indicator = document.getElementById('typingIndicator');
+            if (show) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+
+        // Função removida - o form será enviado diretamente
+
+        // Função removida - sempre enviar via form POST
+
+        function sendTypingStatus(typing) {
+            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN || !isOnline) {
+                return;
+            }
+            
+            chatSocket.send(JSON.stringify({
+                type: 'typing',
+                user_id: currentUserId,
+                is_typing: typing,
+            }));
+        }
+
+        function startTyping() {
+            if (!isTyping) {
+                isTyping = true;
+                sendTypingStatus(true);
+            }
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(stopTyping, 2000);
+        }
+
+        function stopTyping() {
+            if (isTyping) {
+                isTyping = false;
+                sendTypingStatus(false);
+            }
+            clearTimeout(typingTimeout);
+        }
+
+        function markMessageAsRead(messageId) {
+            if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN || !isOnline) {
+                return;
+            }
+            
+            chatSocket.send(JSON.stringify({
+                type: 'read_receipt',
+                message_id: messageId,
+                user_id: currentUserId,
+            }));
+        }
+
+        function updateMessageStatus(messageId, readAtIso) {
+            const msgEl = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (msgEl) {
+                const statusEl = msgEl.querySelector('.msg-status');
+                if (statusEl) {
+                    statusEl.textContent = '✓✓';
+                    statusEl.classList.remove('single-check');
+                    statusEl.classList.add('double-check');
+                    if (readAtIso) {
+                        const t = new Date(readAtIso).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'America/Sao_Paulo'
+                        });
+                        statusEl.title = `Visualizado às ${t}`;
+                        const readAtEl = msgEl.querySelector('.msg-read-at');
+                        if (readAtEl) readAtEl.textContent = t;
+                    }
+                }
+            }
+        }
+
+        // Preview de imagem
+        document.getElementById('imageInput')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.innerHTML = `
+                        <div class="preview-container">
+                            <img src="${e.target.result}" class="image-preview" alt="Preview">
+                            <button type="button" class="remove-preview" onclick="removeImagePreview()">×</button>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function removeImagePreview() {
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreview').innerHTML = '';
+        }
+
+        function openImageModal(imageUrl) {
+            document.getElementById('modalImage').src = imageUrl;
+            document.getElementById('imageModal').style.display = 'block';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // Event listeners
+        const input = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const form = document.getElementById('chatForm');
+
+        if (input) {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                } else {
+                    startTyping();
+                }
+            });
+
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    startTyping();
+                } else {
+                    stopTyping();
+                }
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendMessage();
+            });
+        }
+
+        async function sendMessage() {
+            if (isSending) return;
+            if (!selectedUserId) return;
+
+            const input = document.getElementById('msgInput');
+            const imageInput = document.getElementById('imageInput');
+            const message = (input?.value || '').trim();
+            const image = imageInput?.files?.[0];
+
+            if (!message && !image) return;
+
+            isSending = true;
+            if (sendBtn) sendBtn.disabled = true;
+
+            try {
+                const wsReady = chatSocket && chatSocket.readyState === WebSocket.OPEN && isOnline;
+
+                // Texto puro: manda por WS (mais rápido, sem reload)
+                if (wsReady && message && !image) {
+                    // Adiciona mensagem imediatamente na tela (otimistic update)
+                    const tempId = 'temp_' + Date.now();
+                    addMessageToChat({
+                        type: 'message',
+                        message: message,
+                        sender_id: currentUserId,
+                        sender_username: currentUsername,
+                        receiver_id: selectedUserId,
+                        timestamp: new Date().toISOString(),
+                        message_id: tempId,
+                        is_read: false,
+                    }, true);
+
+                    // Envia via WebSocket
+                    chatSocket.send(JSON.stringify({
+                        type: 'message',
+                        message: message,
+                        sender_id: currentUserId,
+                        receiver_id: selectedUserId,
+                    }));
+
+                    // Limpa input e reseta estado imediatamente
+                    if (input) input.value = '';
+                    stopTyping();
+                    isSending = false;
+                    if (sendBtn) sendBtn.disabled = false;
+                    return;
+                }
+
+                // Imagem (ou fallback): manda via fetch sem redirect
+                const formData = new FormData(form);
+                const resp = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await resp.json().catch(() => null);
+                if (!resp.ok || !data || !data.ok) {
+                    throw new Error('Falha ao enviar');
+                }
+
+                // Se WS não estiver conectado, renderiza localmente como fallback
+                if (!wsReady) {
+                    addMessageToChat({
+                        type: 'message',
+                        message: data.message || '',
+                        image_url: data.image_url || null,
+                        sender_id: currentUserId,
+                        sender_username: currentUsername,
+                        receiver_id: selectedUserId,
+                        timestamp: data.timestamp,
+                        message_id: data.message_id,
+                        is_read: false,
+                    }, true);
+                }
+
+                if (input) input.value = '';
+                removeImagePreview();
+                stopTyping();
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao enviar mensagem. Tente novamente.');
+            } finally {
+                isSending = false;
+                if (sendBtn) sendBtn.disabled = false;
+            }
+        }
+
+        // Scroll to bottom on load
+        const container = document.getElementById('messageContainer');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Marcar mensagens recebidas como lidas ao carregar
+        document.querySelectorAll('.msg.received').forEach(msg => {
+            const messageId = msg.getAttribute('data-message-id');
+            if (messageId) {
+                setTimeout(() => markMessageAsRead(messageId), 1000);
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (chatSocket) {
+                chatSocket.close();
+            }
+        });
+    </script>
+</body>
+</html>
