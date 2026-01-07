@@ -194,11 +194,25 @@ CORS_ALLOWED_ORIGINS = config(
 )
 CORS_ALLOW_CREDENTIALS = True
 
+# CSRF settings - necessário para produção
+# Adiciona domínios confiáveis para CSRF (com protocolo completo)
+csrf_trusted_default = 'https://chatdoamor.onrender.com,http://chatdoamor.onrender.com'
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default=csrf_trusted_default, cast=Csv())
+
 # Security settings
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    # Ajusta configurações de segurança para produção
+    # No Render, vamos desabilitar SSL redirect para evitar problemas
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+    
+    # Cookies seguros - desabilitado temporariamente para funcionar em HTTP/HTTPS
+    # Configure como True se seu site usar apenas HTTPS
+    SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
+    CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+    
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    # Adiciona configuração para cookies SameSite
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
