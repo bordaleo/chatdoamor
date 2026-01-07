@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from decouple import config, Csv
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,7 +28,10 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-=j05)z8por3+8ym=9po4p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+# ALLOWED_HOSTS - aceita domínios do Render, Railway e localhost
+# Configure via variável de ambiente: ALLOWED_HOSTS=chatdoamor.onrender.com,seu-app.railway.app
+default_hosts = 'localhost,127.0.0.1,chatdoamor.onrender.com'
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default=default_hosts, cast=Csv())
 
 
 # Application definition
@@ -85,12 +89,19 @@ ASGI_APPLICATION = 'base.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use DATABASE_URL if available (production), otherwise use SQLite (development)
+DATABASE_URL = config('DATABASE_URL', default=None)
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Redis configuration for Channels
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')

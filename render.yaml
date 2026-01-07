@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: chatamor
+    env: python
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: daphne -b 0.0.0.0 -p $PORT base.asgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: chatdoamor.onrender.com
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: chatamor-redis
+          property: connectionString
+      - key: DATABASE_URL
+        fromDatabase:
+          name: chatamor-db
+          property: connectionString
+
+databases:
+  - name: chatamor-db
+    databaseName: chatamor
+    user: chatamor
+
+redis:
+  - name: chatamor-redis
