@@ -12,6 +12,10 @@ import json
 
 # Login
 def login_view(request):
+    # Se o usuário já estiver autenticado, redireciona para o chat
+    if request.user.is_authenticated:
+        return redirect('chat')
+    
     if request.method == "POST":
         username = request.POST['username']
         password = request.POST['password']
