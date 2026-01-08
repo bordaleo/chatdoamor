@@ -95,6 +95,9 @@ if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
+    # Log para debug (remover em produção se necessário)
+    if DEBUG:
+        print(f"✅ Usando banco de dados: {DATABASES['default']['ENGINE']}")
 else:
     DATABASES = {
         'default': {
@@ -102,6 +105,10 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    if not DEBUG:
+        # Em produção, avisar se não houver DATABASE_URL
+        import warnings
+        warnings.warn("⚠️ DATABASE_URL não configurado! Usando SQLite (não recomendado para produção)")
 
 # Redis configuration for Channels
 REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
