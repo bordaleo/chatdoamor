@@ -66,17 +66,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         elif message_type == 'read_receipt':
             # Mark message as read
             message_id = text_data_json['message_id']
-            read_at = await self.mark_message_as_read(message_id)
+            user_id = text_data_json['user_id']
             
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'read_receipt',
-                    'message_id': message_id,
-                    'read_by': text_data_json['user_id'],
-                    'read_at': read_at,
-                }
-            )
+            # Verificar se o usuário tem permissão para marcar esta mensagem como lida
+            read_at = await self.mark_message_as_read(message_id, user_id)
+            
+            if read_at:
+                # Broadcast read receipt para todos na sala
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'read_receipt',
+                        'message_id': message_id,
+                        'read_by': user_id,
+                        'read_at': read_at,
+                    }
+                )
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -86,16 +91,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         sender_id = event.get('sender_id')
         message_id = event.get('message_id')
         
-        # Se o usuário atual é o receiver, marcar mensagem como lida automaticamente
-        is_read = False
-        read_at = None
-        if user and user.is_authenticated and user.id == receiver_id:
-            read_info = await self.mark_message_as_read(message_id)
-            if read_info:
-                is_read = True
-                read_at = read_info
+        # Determinar se a mensagem foi lida baseado no estado atual do banco
+        # Não marcar automaticamente aqui - deixar o frontend fazer isso quando visualizar
+        is_read = event.get('is_read', False)
+        read_at = event.get('read_at')
         
-        # Send message to WebSocket
+        # Send message to WebSocket - enviar para TODOS os usuários na sala
         message_data = {
             'type': 'message',
             'message': event.get('message', ''),
@@ -112,18 +113,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message_data['image_url'] = event['image_url']
         
         await self.send(text_data=json.dumps(message_data))
-        
-        # Se foi marcada como lida, notificar todos na sala sobre a atualização
-        if is_read and read_at:
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'read_receipt',
-                    'message_id': message_id,
-                    'read_by': receiver_id,
-                    'read_at': read_at,
-                }
-            )
 
     async def typing_indicator(self, event):
         await self.send(text_data=json.dumps({
@@ -161,9 +150,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return User.objects.get(id=user_id).username
 
     @database_sync_to_async
-    def mark_message_as_read(self, message_id):
+    def mark_message_as_read(self, message_id, user_id):
         try:
             message = Message.objects.get(id=message_id)
+            # Verificar se o usuário é o receiver da mensagem
+            if message.receiver.id != user_id:
+                return None
             if not message.is_read:
                 message.mark_as_read()
                 return message.read_at.isoformat() if message.read_at else None

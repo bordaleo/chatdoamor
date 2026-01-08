@@ -827,9 +827,19 @@
                             });
                         }
                         
+                        // Adicionar mensagem ao chat imediatamente
                         addMessageToChat(data, isSent);
-                        // Mensagens recebidas já são marcadas como lidas automaticamente pelo consumer
-                        // Não precisamos marcar novamente aqui
+                        
+                        // Se for mensagem recebida, marcar como lida quando visualizada
+                        if (!isSent) {
+                            // Usar um pequeno delay para garantir que a mensagem foi renderizada
+                            setTimeout(() => {
+                                const msgEl = document.querySelector(`[data-message-id="${data.message_id}"]`);
+                                if (msgEl && isElementInViewport(msgEl)) {
+                                    markMessageAsRead(data.message_id);
+                                }
+                            }, 100);
+                        }
                     } else if (data.type === 'typing') {
                         if (data.user_id !== currentUserId) {
                             showTypingIndicator(data.is_typing);
@@ -864,11 +874,15 @@
             // Verificar se mensagem já existe (evitar duplicatas)
             const existingMsg = container.querySelector(`[data-message-id="${data.message_id}"]`);
             if (existingMsg) {
+                // Se já existe, apenas atualizar o status de leitura se necessário
+                if (isSent && data.is_read) {
+                    updateMessageStatus(data.message_id, data.read_at);
+                }
                 return; // Mensagem já existe
             }
             
             // Se for mensagem temporária e já existe outra temporária com mesmo conteúdo, não adicionar
-            if (data.message_id.toString().startsWith('temp_')) {
+            if (data.message_id && data.message_id.toString().startsWith('temp_')) {
                 const tempMsgs = container.querySelectorAll('[data-message-id^="temp_"]');
                 for (let tempMsg of tempMsgs) {
                     const tempContent = tempMsg.querySelector('div')?.textContent?.trim();
@@ -921,6 +935,17 @@
             if (emptyState) {
                 emptyState.remove();
             }
+        }
+        
+        // Função auxiliar para verificar se elemento está visível
+        function isElementInViewport(el) {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
         }
 
         function escapeHtml(text) {
@@ -999,7 +1024,41 @@
                         });
                         statusEl.title = `Visualizado às ${t}`;
                         const readAtEl = msgEl.querySelector('.msg-read-at');
-                        if (readAtEl) readAtEl.textContent = t;
+                        if (readAtEl) {
+                            readAtEl.textContent = t;
+                        } else {
+                            // Se não existe, criar o elemento
+                            const timeEl = msgEl.querySelector('.msg-time');
+                            if (timeEl) {
+                                const newReadAtEl = document.createElement('span');
+                                newReadAtEl.className = 'msg-read-at';
+                                newReadAtEl.textContent = t;
+                                statusEl.parentNode.insertBefore(newReadAtEl, statusEl.nextSibling);
+                            }
+                        }
+                    }
+                } else {
+                    // Se não existe status element, criar um (para mensagens enviadas)
+                    const timeEl = msgEl.querySelector('.msg-time');
+                    if (timeEl) {
+                        const newStatusEl = document.createElement('span');
+                        newStatusEl.className = 'msg-status double-check';
+                        newStatusEl.textContent = '✓✓';
+                        if (readAtIso) {
+                            const t = new Date(readAtIso).toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'America/Sao_Paulo'
+                            });
+                            newStatusEl.title = `Visualizado às ${t}`;
+                            const newReadAtEl = document.createElement('span');
+                            newReadAtEl.className = 'msg-read-at';
+                            newReadAtEl.textContent = t;
+                            timeEl.appendChild(newStatusEl);
+                            timeEl.appendChild(newReadAtEl);
+                        } else {
+                            timeEl.appendChild(newStatusEl);
+                        }
                     }
                 }
             }
@@ -1164,7 +1223,7 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Marcar mensagens recebidas como lidas ao carregar (apenas as que ainda não foram lidas)
+        // Marcar mensagens recebidas como lidas quando visualizadas
         // Usar Intersection Observer para marcar como lida quando a mensagem for visualizada
         const observerOptions = {
             root: null,
@@ -1183,7 +1242,11 @@
                     const statusEl = msgEl.querySelector('.msg-status');
                     const isAlreadyRead = statusEl && statusEl.classList.contains('double-check');
                     
-                    if (messageId && isReceived && !isAlreadyRead && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                    // Verificar se já foi marcada como lida (evitar múltiplas chamadas)
+                    const wasMarked = msgEl.dataset.markedAsRead === 'true';
+                    
+                    if (messageId && isReceived && !isAlreadyRead && !wasMarked && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                        msgEl.dataset.markedAsRead = 'true'; // Marcar para evitar múltiplas chamadas
                         markMessageAsRead(messageId);
                     }
                 }
@@ -1194,6 +1257,20 @@
         document.querySelectorAll('.msg.received').forEach(msg => {
             messageObserver.observe(msg);
         });
+        
+        // Também marcar mensagens visíveis quando a página carrega
+        setTimeout(() => {
+            document.querySelectorAll('.msg.received').forEach(msg => {
+                const messageId = msg.getAttribute('data-message-id');
+                if (messageId && isElementInViewport(msg) && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                    const wasMarked = msg.dataset.markedAsRead === 'true';
+                    if (!wasMarked) {
+                        msg.dataset.markedAsRead = 'true';
+                        markMessageAsRead(messageId);
+                    }
+                }
+            });
+        }, 500);
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', function() {
