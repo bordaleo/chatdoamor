@@ -114,12 +114,19 @@ def chat_view(request):
 
     for u in users:
         p = presence_by_id.get(u.id)
+        # Se não existe presence, criar com status offline
+        if not p:
+            p, _ = UserPresence.objects.get_or_create(user=u)
+            presence_by_id[u.id] = p
         u.is_online = bool(p.is_online) if p else False
         u.last_seen = p.last_seen if p else None
 
     selected_presence = None
     if selected_user:
         selected_presence = UserPresence.objects.filter(user_id=selected_user.id).first()
+        # Se não existe presence, criar com status offline
+        if not selected_presence:
+            selected_presence, _ = UserPresence.objects.get_or_create(user=selected_user)
 
     return render(request, 'chat.html', {
         'users': users,

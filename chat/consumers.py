@@ -191,8 +191,13 @@ class PresenceConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(getattr(self, 'group_name', 'presence'), self.channel_name)
 
     async def receive(self, text_data):
-        # currently no client->server presence commands needed
-        return
+        try:
+            data = json.loads(text_data)
+            if data.get('type') == 'ping':
+                # Responder ao ping para manter conexão ativa
+                await self.send(text_data=json.dumps({'type': 'pong'}))
+        except:
+            pass
 
     async def presence_update(self, event):
         await self.send(text_data=json.dumps({

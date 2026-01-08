@@ -656,6 +656,7 @@
         let isTyping = false;
         let isOnline = navigator.onLine;
         let isSending = false;
+        let presenceHeartbeat = null;
 
         // Detectar status de conexão
         window.addEventListener('online', () => {
@@ -670,8 +671,12 @@
 
         // WebSocket connection
         if (roomName) {
-            connectWebSocket();
+            // Aguardar um pouco para garantir que a página está totalmente carregada
+            setTimeout(() => {
+                connectWebSocket();
+            }, 100);
         }
+        // Conectar WebSocket de presença imediatamente
         connectPresenceWebSocket();
 
         function connectPresenceWebSocket() {
@@ -681,37 +686,64 @@
             presenceSocket = new WebSocket(wsUrl);
 
             presenceSocket.onopen = function() {
-                // conectado
+                console.log('Presence WebSocket conectado');
+                // Iniciar heartbeat para manter conexão ativa
+                if (presenceHeartbeat) clearInterval(presenceHeartbeat);
+                presenceHeartbeat = setInterval(() => {
+                    if (presenceSocket && presenceSocket.readyState === WebSocket.OPEN) {
+                        // Enviar ping para manter conexão ativa
+                        try {
+                            presenceSocket.send(JSON.stringify({type: 'ping'}));
+                        } catch (e) {
+                            console.error('Erro ao enviar ping:', e);
+                        }
+                    }
+                }, 30000); // A cada 30 segundos
             };
 
             presenceSocket.onclose = function() {
+                console.log('Presence WebSocket desconectado, tentando reconectar...');
+                if (presenceHeartbeat) {
+                    clearInterval(presenceHeartbeat);
+                    presenceHeartbeat = null;
+                }
                 // tentar reconectar
                 setTimeout(() => {
                     if (navigator.onLine) connectPresenceWebSocket();
                 }, 3000);
             };
 
-            presenceSocket.onerror = function() {
-                // ignore
+            presenceSocket.onerror = function(error) {
+                console.error('Presence WebSocket error:', error);
             };
 
             presenceSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                if (data.type === 'presence_snapshot') {
-                    (data.users || []).forEach(u => {
-                        updateUserPresenceUI(u.user_id, u.is_online, u.last_seen);
-                    });
-                } else if (data.type === 'presence_update') {
-                    updateUserPresenceUI(data.user_id, data.is_online, data.last_seen);
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'presence_snapshot') {
+                        (data.users || []).forEach(u => {
+                            updateUserPresenceUI(u.user_id, u.is_online, u.last_seen);
+                        });
+                    } else if (data.type === 'presence_update') {
+                        updateUserPresenceUI(data.user_id, data.is_online, data.last_seen);
+                    }
+                } catch (error) {
+                    console.error('Erro ao processar mensagem de presença:', error);
                 }
             };
         }
 
         function formatLastSeen(iso) {
             if (!iso) return null;
-            const d = new Date(iso);
-            const pad = (n) => String(n).padStart(2, '0');
-            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            try {
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return null;
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            } catch (e) {
+                console.error('Erro ao formatar last_seen:', e);
+                return null;
+            }
         }
 
         function updateUserPresenceUI(userId, isOnlineNow, lastSeenIso) {
@@ -731,7 +763,13 @@
                 const presenceText = document.getElementById('presenceText');
                 if (presenceText) {
                     const lastSeenTxt = formatLastSeen(lastSeenIso);
-                    presenceText.textContent = isOnlineNow ? '● online' : (lastSeenTxt ? `visto por último ${lastSeenTxt}` : 'offline');
+                    if (isOnlineNow) {
+                        presenceText.textContent = '● online';
+                    } else if (lastSeenTxt) {
+                        presenceText.textContent = `visto por último ${lastSeenTxt}`;
+                    } else {
+                        presenceText.textContent = 'offline';
+                    }
                 }
             }
         }
@@ -745,56 +783,60 @@
             chatSocket = new WebSocket(wsUrl);
 
             chatSocket.onopen = function(e) {
-                console.log('WebSocket conectado');
+                console.log('Chat WebSocket conectado para room:', roomName);
                 isOnline = true;
                 updateConnectionStatus('connected');
             };
 
             chatSocket.onclose = function(e) {
-                console.log('WebSocket desconectado');
+                console.log('Chat WebSocket desconectado, tentando reconectar...');
                 updateConnectionStatus('disconnected');
                 // Tentar reconectar após 3 segundos
                 setTimeout(() => {
-                    if (roomName && isOnline) {
+                    if (roomName && navigator.onLine) {
                         connectWebSocket();
                     }
                 }, 3000);
             };
 
             chatSocket.onerror = function(error) {
-                console.error('WebSocket error:', error);
+                console.error('Chat WebSocket error:', error);
                 updateConnectionStatus('disconnected');
             };
 
             chatSocket.onmessage = function(e) {
-                const data = JSON.parse(e.data);
-                
-                if (data.type === 'message') {
-                    const isSent = data.sender_id === currentUserId;
+                try {
+                    const data = JSON.parse(e.data);
                     
-                    // Se for mensagem enviada pelo usuário, verificar se há temporária para substituir
-                    if (isSent) {
-                        const container = document.getElementById('messageContainer');
-                        const tempMsgs = container.querySelectorAll('[data-message-id^="temp_"]');
-                        tempMsgs.forEach(tempMsg => {
-                            const tempContent = tempMsg.querySelector('div')?.textContent?.trim();
-                            if (tempContent === (data.message || '').trim()) {
-                                tempMsg.remove();
-                            }
-                        });
+                    if (data.type === 'message') {
+                        const isSent = data.sender_id === currentUserId;
+                        
+                        // Se for mensagem enviada pelo usuário, verificar se há temporária para substituir
+                        if (isSent) {
+                            const container = document.getElementById('messageContainer');
+                            const tempMsgs = container.querySelectorAll('[data-message-id^="temp_"]');
+                            tempMsgs.forEach(tempMsg => {
+                                const tempContent = tempMsg.querySelector('div')?.textContent?.trim();
+                                if (tempContent === (data.message || '').trim()) {
+                                    tempMsg.remove();
+                                }
+                            });
+                        }
+                        
+                        addMessageToChat(data, isSent);
+                        // Marcar como lida se for mensagem recebida
+                        if (!isSent) {
+                            markMessageAsRead(data.message_id);
+                        }
+                    } else if (data.type === 'typing') {
+                        if (data.user_id !== currentUserId) {
+                            showTypingIndicator(data.is_typing);
+                        }
+                    } else if (data.type === 'read_receipt') {
+                        updateMessageStatus(data.message_id, data.read_at);
                     }
-                    
-                    addMessageToChat(data, isSent);
-                    // Marcar como lida se for mensagem recebida
-                    if (!isSent) {
-                        markMessageAsRead(data.message_id);
-                    }
-                } else if (data.type === 'typing') {
-                    if (data.user_id !== currentUserId) {
-                        showTypingIndicator(data.is_typing);
-                    }
-                } else if (data.type === 'read_receipt') {
-                    updateMessageStatus(data.message_id, data.read_at);
+                } catch (error) {
+                    console.error('Erro ao processar mensagem WebSocket:', error);
                 }
             };
         }
@@ -1126,6 +1168,25 @@
         window.addEventListener('beforeunload', function() {
             if (chatSocket) {
                 chatSocket.close();
+            }
+            if (presenceSocket) {
+                presenceSocket.close();
+            }
+            if (presenceHeartbeat) {
+                clearInterval(presenceHeartbeat);
+            }
+        });
+
+        // Atualizar presença quando a página fica visível/invisível
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Página ficou invisível - pode marcar como offline depois de um tempo
+                // Mas não vamos fazer isso imediatamente para não marcar como offline quando apenas mudar de aba
+            } else {
+                // Página ficou visível - garantir que WebSocket está conectado
+                if (!presenceSocket || presenceSocket.readyState !== WebSocket.OPEN) {
+                    connectPresenceWebSocket();
+                }
             }
         });
     </script>
