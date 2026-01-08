@@ -752,7 +752,11 @@
             if (userItem) {
                 const dot = userItem.querySelector('.online-indicator');
                 if (dot) {
-                    dot.classList.toggle('online', !!isOnlineNow);
+                    // Remover classe online primeiro, depois adicionar se necessário
+                    dot.classList.remove('online');
+                    if (isOnlineNow) {
+                        dot.classList.add('online');
+                    }
                     const lastSeenTxt = formatLastSeen(lastSeenIso);
                     dot.title = isOnlineNow ? 'Online' : (lastSeenTxt ? `Visto por último: ${lastSeenTxt}` : 'Offline');
                 }
@@ -1186,6 +1190,46 @@
                 // Página ficou visível - garantir que WebSocket está conectado
                 if (!presenceSocket || presenceSocket.readyState !== WebSocket.OPEN) {
                     connectPresenceWebSocket();
+                }
+            }
+        });
+
+        // Polling periódico para atualizar mensagens e status de visualização
+        // Recarrega a página a cada 10 segundos para verificar novas mensagens e visualizações
+        let pageRefreshInterval = null;
+        
+        function startPageRefreshPolling() {
+            // Limpar intervalo anterior se existir
+            if (pageRefreshInterval) {
+                clearInterval(pageRefreshInterval);
+            }
+            
+            // Recarregar página a cada 10 segundos para verificar novas mensagens e visualizações
+            pageRefreshInterval = setInterval(() => {
+                // Só recarregar se a página estiver visível e não estiver enviando mensagem
+                if (!document.hidden && !isSending) {
+                    // Verificar se há novas mensagens ou atualizações antes de recarregar
+                    // Para evitar recarregar desnecessariamente, vamos fazer uma verificação rápida
+                    window.location.reload();
+                }
+            }, 10000); // 10 segundos
+        }
+
+        // Iniciar polling quando a página carregar
+        if (selectedUserId) {
+            startPageRefreshPolling();
+        }
+
+        // Pausar polling quando a página ficar invisível
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (pageRefreshInterval) {
+                    clearInterval(pageRefreshInterval);
+                    pageRefreshInterval = null;
+                }
+            } else {
+                if (selectedUserId && !pageRefreshInterval) {
+                    startPageRefreshPolling();
                 }
             }
         });

@@ -211,10 +211,10 @@ class PresenceConsumer(AsyncWebsocketConsumer):
     def set_online(self, user_id):
         user = User.objects.get(id=user_id)
         presence, _ = UserPresence.objects.get_or_create(user=user)
-        if presence.last_seen is None:
-            presence.last_seen = timezone.now()
-        if not presence.is_online:
-            presence.is_online = True
+        # Sempre atualizar last_seen quando usuário fica online
+        presence.last_seen = timezone.now()
+        # Sempre marcar como online quando conecta
+        presence.is_online = True
         presence.save(update_fields=['is_online', 'last_seen', 'updated_at'])
         return {
             'last_seen': presence.last_seen.isoformat() if presence.last_seen else None,

@@ -32,6 +32,14 @@ def login_view(request):
 # Chat
 @login_required
 def chat_view(request):
+    # Atualizar last_seen do usuário atual sempre que acessa a página
+    # O status online será atualizado pelo WebSocket de presença quando conectar
+    user_presence, _ = UserPresence.objects.get_or_create(user=request.user)
+    user_presence.last_seen = timezone.now()
+    # Não marcar como online aqui, pois o WebSocket de presença fará isso
+    # Mas garantir que last_seen esteja atualizado
+    user_presence.save(update_fields=['last_seen', 'updated_at'])
+    
     users = User.objects.exclude(id=request.user.id)
     selected_user = None
     messages_list = []
