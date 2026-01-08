@@ -7,41 +7,54 @@ class Command(BaseCommand):
     help = 'Limpa todos os usuários e cria apenas gabi e leo com senha borlaria'
 
     def handle(self, *args, **options):
-        # Deletar todas as mensagens
+        self.stdout.write('🗑️  Deletando todas as mensagens...')
         Message.objects.all().delete()
-        self.stdout.write(self.style.SUCCESS('Mensagens deletadas'))
+        self.stdout.write(self.style.SUCCESS('✅ Mensagens deletadas'))
 
-        # Deletar todos os usuários exceto superusuários
-        User.objects.filter(is_superuser=False).delete()
-        self.stdout.write(self.style.SUCCESS('Usuários não-superusuários deletados'))
+        self.stdout.write('🗑️  Deletando usuários não-superusuários...')
+        deleted_count = User.objects.filter(is_superuser=False).delete()[0]
+        self.stdout.write(self.style.SUCCESS(f'✅ {deleted_count} usuário(s) deletado(s)'))
 
-        # Criar usuário gabi
-        if not User.objects.filter(username='gabi').exists():
-            gabi = User.objects.create_user(
-                username='gabi',
-                password='borlaria'
-            )
-            self.stdout.write(self.style.SUCCESS(f'Usuário "gabi" criado'))
+        # Criar ou atualizar usuário gabi
+        self.stdout.write('👤 Configurando usuário "gabi"...')
+        gabi, created = User.objects.get_or_create(username='gabi')
+        gabi.set_password('borlaria')
+        gabi.is_active = True
+        gabi.is_staff = False
+        gabi.is_superuser = False
+        gabi.save()
+        if created:
+            self.stdout.write(self.style.SUCCESS('✅ Usuário "gabi" criado'))
         else:
-            gabi = User.objects.get(username='gabi')
-            gabi.set_password('borlaria')
-            gabi.save()
-            self.stdout.write(self.style.SUCCESS(f'Senha do usuário "gabi" atualizada'))
+            self.stdout.write(self.style.SUCCESS('✅ Senha do usuário "gabi" atualizada'))
 
-        # Criar usuário leo
-        if not User.objects.filter(username='leo').exists():
-            leo = User.objects.create_user(
-                username='leo',
-                password='borlaria'
-            )
-            self.stdout.write(self.style.SUCCESS(f'Usuário "leo" criado'))
+        # Criar ou atualizar usuário leo
+        self.stdout.write('👤 Configurando usuário "leo"...')
+        leo, created = User.objects.get_or_create(username='leo')
+        leo.set_password('borlaria')
+        leo.is_active = True
+        leo.is_staff = False
+        leo.is_superuser = False
+        leo.save()
+        if created:
+            self.stdout.write(self.style.SUCCESS('✅ Usuário "leo" criado'))
         else:
-            leo = User.objects.get(username='leo')
-            leo.set_password('borlaria')
-            leo.save()
-            self.stdout.write(self.style.SUCCESS(f'Senha do usuário "leo" atualizada'))
+            self.stdout.write(self.style.SUCCESS('✅ Senha do usuário "leo" atualizada'))
 
-        self.stdout.write(self.style.SUCCESS('\n✅ Setup concluído!'))
-        self.stdout.write(self.style.SUCCESS('Usuários criados:'))
+        # Verificar usuários criados
+        total_users = User.objects.filter(is_superuser=False).count()
+        self.stdout.write(self.style.SUCCESS(f'\n✅ Setup concluído!'))
+        self.stdout.write(self.style.SUCCESS(f'📊 Total de usuários não-superusuários: {total_users}'))
+        self.stdout.write(self.style.SUCCESS('\n👥 Usuários disponíveis:'))
         self.stdout.write(self.style.SUCCESS('  - gabi (senha: borlaria)'))
         self.stdout.write(self.style.SUCCESS('  - leo (senha: borlaria)'))
+        
+        # Verificar se os usuários podem fazer login
+        from django.contrib.auth import authenticate
+        gabi_auth = authenticate(username='gabi', password='borlaria')
+        leo_auth = authenticate(username='leo', password='borlaria')
+        
+        if gabi_auth and leo_auth:
+            self.stdout.write(self.style.SUCCESS('\n✅ Verificação: Ambos os usuários podem fazer login!'))
+        else:
+            self.stdout.write(self.style.WARNING('\n⚠️  Aviso: Algum usuário não pode fazer login. Verifique as senhas.'))

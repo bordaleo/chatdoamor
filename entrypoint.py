@@ -195,10 +195,22 @@ def main():
     print("=" * 60)
     show_migrations_status()
     
+    # Configurar usuários (gabi e leo)
+    print("\n" + "=" * 60)
+    print("PASSO 4: Configurando usuários (gabi e leo)")
+    print("=" * 60)
+    try:
+        call_command('setup_users', verbosity=1)
+        print("✅ Usuários configurados com sucesso!")
+    except Exception as e:
+        print(f"⚠️  Aviso: Erro ao configurar usuários: {e}")
+        print("   Isso não impede o servidor de iniciar, mas os usuários podem não existir.")
+        print("   Execute manualmente: python manage.py setup_users")
+    
     # Coletar arquivos estáticos (opcional)
     if os.environ.get('COLLECT_STATIC', '').lower() == 'true':
         print("\n" + "=" * 60)
-        print("PASSO 4: Coletando arquivos estáticos")
+        print("PASSO 5: Coletando arquivos estáticos")
         print("=" * 60)
         try:
             call_command('collectstatic', verbosity=1, interactive=False)
@@ -207,7 +219,7 @@ def main():
     
     # Iniciar servidor Daphne
     print("\n" + "=" * 60)
-    print("PASSO 5: Iniciando servidor Daphne")
+    print("PASSO 6: Iniciando servidor Daphne")
     print("=" * 60)
     port = os.environ.get('PORT', '8000')
     print(f"🚀 Iniciando servidor na porta {port}...")
