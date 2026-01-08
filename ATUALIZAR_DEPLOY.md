@@ -57,9 +57,26 @@ Após o deploy:
 
 Os seguintes arquivos foram atualizados:
 
-- ✅ `chat/templates/chat.html` - Correções de WebSocket e UI
-- ✅ `chat/views.py` - Inicialização de UserPresence
-- ✅ `chat/consumers.py` - Suporte a ping/pong no PresenceConsumer
+- ✅ `chat/templates/chat.html` - Removido polling de recarregamento, melhorias em tempo real
+- ✅ `chat/views.py` - Notificação via WebSocket quando mensagens são marcadas como lidas
+- ✅ `chat/consumers.py` - Marca mensagens como lidas automaticamente ao receber via WebSocket
+- ✅ `render.yaml` - Atualizado domínios permitidos
+
+## 🎯 Funcionalidades Implementadas
+
+✅ **Mensagens em Tempo Real**
+- Mensagens aparecem instantaneamente sem atualizar a página
+- Funciona tanto para texto quanto para imagens
+
+✅ **Status de Visualizado**
+- Status de visualização atualiza em tempo real via WebSocket
+- Marcação automática quando mensagem é recebida
+- Atualização imediata quando outra pessoa visualiza
+
+✅ **Status Online/Offline**
+- Indicador online aparece em tempo real quando usuário conecta
+- Status offline atualiza quando usuário desconecta
+- "Visto por último" atualiza automaticamente
 
 ---
 

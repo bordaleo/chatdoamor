@@ -80,22 +80,50 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # Receive message from room group
     async def chat_message(self, event):
+        # Get current user from scope
+        user = self.scope.get('user')
+        receiver_id = event.get('receiver_id')
+        sender_id = event.get('sender_id')
+        message_id = event.get('message_id')
+        
+        # Se o usuário atual é o receiver, marcar mensagem como lida automaticamente
+        is_read = False
+        read_at = None
+        if user and user.is_authenticated and user.id == receiver_id:
+            read_info = await self.mark_message_as_read(message_id)
+            if read_info:
+                is_read = True
+                read_at = read_info
+        
         # Send message to WebSocket
         message_data = {
             'type': 'message',
             'message': event.get('message', ''),
-            'sender_id': event['sender_id'],
-            'sender_username': event['sender_username'],
-            'receiver_id': event['receiver_id'],
-            'timestamp': event['timestamp'],
-            'message_id': event['message_id'],
-            'is_read': event.get('is_read', False),
+            'sender_id': sender_id,
+            'sender_username': event.get('sender_username', ''),
+            'receiver_id': receiver_id,
+            'timestamp': event.get('timestamp', ''),
+            'message_id': message_id,
+            'is_read': is_read,
+            'read_at': read_at,
         }
         
         if event.get('image_url'):
             message_data['image_url'] = event['image_url']
         
         await self.send(text_data=json.dumps(message_data))
+        
+        # Se foi marcada como lida, notificar todos na sala sobre a atualização
+        if is_read and read_at:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'read_receipt',
+                    'message_id': message_id,
+                    'read_by': receiver_id,
+                    'read_at': read_at,
+                }
+            )
 
     async def typing_indicator(self, event):
         await self.send(text_data=json.dumps({
@@ -136,8 +164,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def mark_message_as_read(self, message_id):
         try:
             message = Message.objects.get(id=message_id)
-            message.mark_as_read()
-            return message.read_at.isoformat() if message.read_at else None
+            if not message.is_read:
+                message.mark_as_read()
+                return message.read_at.isoformat() if message.read_at else None
+            else:
+                # Já está lida, retorna o read_at existente
+                return message.read_at.isoformat() if message.read_at else None
         except Message.DoesNotExist:
             return None
 

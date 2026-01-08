@@ -61,16 +61,17 @@ def chat_view(request):
                 timestamp=timezone.now()
             )
             
+            # Preparar image_url para resposta
+            image_url = None
+            if message.image:
+                image_url = request.build_absolute_uri(message.image.url)
+            
             # Notificar via WebSocket
             try:
                 room_name = f"room_{min(request.user.id, int(receiver_id))}_{max(request.user.id, int(receiver_id))}"
                 channel_layer = get_channel_layer()
                 
                 if channel_layer:
-                    image_url = None
-                    if message.image:
-                        image_url = request.build_absolute_uri(message.image.url)
-                    
                     async_to_sync(channel_layer.group_send)(
                         f'chat_{room_name}',
                         {
@@ -108,12 +109,37 @@ def chat_view(request):
             receiver__in=[request.user, selected_user]
         ).order_by('timestamp')
         
-        # Marcar mensagens recebidas como lidas
-        Message.objects.filter(
+        # Marcar mensagens recebidas como lidas e notificar via WebSocket
+        unread_messages = Message.objects.filter(
             receiver=request.user,
             sender=selected_user,
             is_read=False
-        ).update(is_read=True, read_at=timezone.now())
+        )
+        
+        if unread_messages.exists():
+            # Atualizar no banco
+            for msg in unread_messages:
+                msg.mark_as_read()
+            
+            # Notificar via WebSocket para cada mensagem marcada como lida
+            try:
+                room_name = f"room_{min(request.user.id, int(user_id))}_{max(request.user.id, int(user_id))}"
+                channel_layer = get_channel_layer()
+                
+                if channel_layer:
+                    for msg in unread_messages:
+                        async_to_sync(channel_layer.group_send)(
+                            f'chat_{room_name}',
+                            {
+                                'type': 'read_receipt',
+                                'message_id': msg.id,
+                                'read_by': request.user.id,
+                                'read_at': msg.read_at.isoformat() if msg.read_at else None,
+                            }
+                        )
+            except Exception as e:
+                # Se WebSocket falhar, continua normalmente (mensagens já foram marcadas)
+                print(f"Erro ao notificar leitura via WebSocket: {e}")
 
     # Presence data for user list + selected user
     user_ids = list(users.values_list('id', flat=True))

@@ -12,9 +12,9 @@ services:
       - key: DEBUG
         value: False
       - key: ALLOWED_HOSTS
-        value: chatdoamor.onrender.com
+        value: chatamor.onrender.com,chatdoamor.onrender.com
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://chatdoamor.onrender.com,http://chatdoamor.onrender.com
+        value: https://chatamor.onrender.com,http://chatamor.onrender.com,https://chatdoamor.onrender.com,http://chatdoamor.onrender.com
       - key: SESSION_COOKIE_SECURE
         value: False
       - key: CSRF_COOKIE_SECURE

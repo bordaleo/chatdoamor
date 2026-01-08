@@ -828,15 +828,14 @@
                         }
                         
                         addMessageToChat(data, isSent);
-                        // Marcar como lida se for mensagem recebida
-                        if (!isSent) {
-                            markMessageAsRead(data.message_id);
-                        }
+                        // Mensagens recebidas já são marcadas como lidas automaticamente pelo consumer
+                        // Não precisamos marcar novamente aqui
                     } else if (data.type === 'typing') {
                         if (data.user_id !== currentUserId) {
                             showTypingIndicator(data.is_typing);
                         }
                     } else if (data.type === 'read_receipt') {
+                        // Atualizar status de visualização em tempo real
                         updateMessageStatus(data.message_id, data.read_at);
                     }
                 } catch (error) {
@@ -911,6 +910,11 @@
             
             container.appendChild(msgDiv);
             container.scrollTop = container.scrollHeight;
+            
+            // Observar nova mensagem recebida para marcar como lida quando visualizada
+            if (!isSent && typeof messageObserver !== 'undefined') {
+                messageObserver.observe(msgDiv);
+            }
             
             // Remover empty state se existir
             const emptyState = container.querySelector('.empty-state');
@@ -1160,12 +1164,35 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        // Marcar mensagens recebidas como lidas ao carregar
+        // Marcar mensagens recebidas como lidas ao carregar (apenas as que ainda não foram lidas)
+        // Usar Intersection Observer para marcar como lida quando a mensagem for visualizada
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5 // Marcar como lida quando 50% da mensagem estiver visível
+        };
+
+        const messageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const msgEl = entry.target;
+                    const messageId = msgEl.getAttribute('data-message-id');
+                    const isReceived = msgEl.classList.contains('received');
+                    
+                    // Verificar se a mensagem já foi marcada como lida
+                    const statusEl = msgEl.querySelector('.msg-status');
+                    const isAlreadyRead = statusEl && statusEl.classList.contains('double-check');
+                    
+                    if (messageId && isReceived && !isAlreadyRead && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                        markMessageAsRead(messageId);
+                    }
+                }
+            });
+        }, observerOptions);
+
+        // Observar todas as mensagens recebidas existentes
         document.querySelectorAll('.msg.received').forEach(msg => {
-            const messageId = msg.getAttribute('data-message-id');
-            if (messageId) {
-                setTimeout(() => markMessageAsRead(messageId), 1000);
-            }
+            messageObserver.observe(msg);
         });
 
         // Cleanup on page unload
@@ -1194,45 +1221,7 @@
             }
         });
 
-        // Polling periódico para atualizar mensagens e status de visualização
-        // Recarrega a página a cada 10 segundos para verificar novas mensagens e visualizações
-        let pageRefreshInterval = null;
-        
-        function startPageRefreshPolling() {
-            // Limpar intervalo anterior se existir
-            if (pageRefreshInterval) {
-                clearInterval(pageRefreshInterval);
-            }
-            
-            // Recarregar página a cada 10 segundos para verificar novas mensagens e visualizações
-            pageRefreshInterval = setInterval(() => {
-                // Só recarregar se a página estiver visível e não estiver enviando mensagem
-                if (!document.hidden && !isSending) {
-                    // Verificar se há novas mensagens ou atualizações antes de recarregar
-                    // Para evitar recarregar desnecessariamente, vamos fazer uma verificação rápida
-                    window.location.reload();
-                }
-            }, 10000); // 10 segundos
-        }
-
-        // Iniciar polling quando a página carregar
-        if (selectedUserId) {
-            startPageRefreshPolling();
-        }
-
-        // Pausar polling quando a página ficar invisível
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                if (pageRefreshInterval) {
-                    clearInterval(pageRefreshInterval);
-                    pageRefreshInterval = null;
-                }
-            } else {
-                if (selectedUserId && !pageRefreshInterval) {
-                    startPageRefreshPolling();
-                }
-            }
-        });
+        // Polling removido - agora tudo funciona em tempo real via WebSocket
     </script>
 </body>
 </html>
